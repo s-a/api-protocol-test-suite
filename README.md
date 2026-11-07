@@ -9,6 +9,8 @@ A self-hosted workspace for preparing HTTP API tests. The English-language inter
 
 The build requires Node.js 24 or later and npm.
 
+If `.env` does not exist, copy `.env.example` to `.env` in the repository root. Generate an active storage key before the first start. See [Account data encryption](#account-data-encryption).
+
 ```sh
 npm ci
 npm run build
@@ -42,7 +44,7 @@ Default startup requires an active [account storage key](#account-data-encryptio
 | Runtime Bundle | Slim contents and installed runtime dependencies | Node.js 24.x for Windows x64 on `PATH`. |
 | Standalone | Runtime Bundle contents and `runtime\node.exe` | Windows x64. |
 
-Extract the ZIP and run `start.cmd`. The launcher uses the extracted directory as its working directory. It also accepts the server commands documented below. For example, `start.cmd accounts list` works with all three packages.
+Extract the ZIP. For a new installation, copy the included `.env.example` to `.env` in the extracted directory. After installing dependencies if required, run `start.cmd storage generate-key` to generate the first storage key, then run `start.cmd` to start the server. The launcher uses the extracted directory as its working directory and accepts the server commands documented below.
 
 GitHub Actions provides all three ZIPs as workflow artifacts. A push of a version tag such as `v1.0.0` also attaches the ZIPs to a GitHub Release. Each workflow run resolves the latest stable Node.js 24.x release for Windows x64 before building and testing. Standalone records the bundled version in `runtime\VERSION.txt`.
 

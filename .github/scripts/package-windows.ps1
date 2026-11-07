@@ -42,7 +42,7 @@ try {
         Copy-Item -Destination $server
     Copy-Item -LiteralPath (Join-Path $project 'apps/server/favicon.png') -Destination $server
     Copy-Item -LiteralPath (Join-Path $project 'apps/web/dist') -Destination $web -Recurse
-    Copy-Item -LiteralPath ('package.json', 'package-lock.json', 'README.md' | ForEach-Object { Join-Path $project $_ }) -Destination $app
+    Copy-Item -LiteralPath ('package.json', 'package-lock.json', 'README.md', '.env.example' | ForEach-Object { Join-Path $project $_ }) -Destination $app
 
     Write-Launcher 'node.exe'
     Write-Archive 'slim'
