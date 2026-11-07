@@ -1,0 +1,517 @@
+:root {
+  color-scheme: dark;
+  --vscode-font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --vscode-font-size: 14px;
+  --vscode-foreground: #ebebeb;
+  --vscode-editor-background: #212121;
+  --vscode-sideBar-background: #242424;
+  --vscode-panel-background: #212121;
+  --vscode-panel-border: #3d3d3d;
+  --vscode-settings-headerBorder: var(--vscode-panel-border);
+  --vscode-descriptionForeground: #aaa;
+  --vscode-button-background: #ff6c37;
+  --vscode-button-hoverBackground: #ff8256;
+  --vscode-button-foreground: #171717;
+  --vscode-button-secondaryBackground: #303030;
+  --vscode-button-secondaryHoverBackground: #3a3a3a;
+  --vscode-button-secondaryForeground: #ebebeb;
+  --vscode-focusBorder: #ff8b66;
+  --vscode-panelTitle-activeBorder: #ff6c37;
+  --vscode-panelTitle-activeForeground: #ebebeb;
+  --vscode-panelTitle-inactiveForeground: #aaa;
+  --vscode-list-activeSelectionBackground: #373737;
+  --vscode-list-inactiveSelectionBackground: #373737;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-list-hoverBackground: #303030;
+  --surface-inset: #292929;
+  --mono-font: "Cascadia Code", Consolas, monospace;
+  font: var(--vscode-font-size) var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.request-response { margin-top: 1.25rem; }
+.response-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.response-heading h2, .rows-editor h2 { margin: 0; font-size: 1rem; font-weight: 650; }
+.response-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; margin: 0; font: 0.8rem var(--mono-font); }
+.response-code, .response-duration { padding: 0.25rem 0.5rem; color: var(--vscode-foreground); background: var(--vscode-button-secondaryBackground); }
+.response-code[data-status-group="2"], .response-duration[data-duration-band="fast"] { color: #6bdd9a; background: #6bdd9a1a; }
+.response-duration[data-duration-band="moderate"] { color: #ffcb65; background: #ffcb651a; }
+.response-code:is([data-status-group="4"], [data-status-group="5"]), .response-duration[data-duration-band="slow"] { color: #ff8080; background: #ff80801a; }
+.request-response details { margin-top: 0.85rem; }
+.response-body-heading, .response-copy { display: flex; align-items: center; gap: 0.75rem; }
+.response-body-heading { justify-content: space-between; margin: 0.85rem 0 0.5rem; }
+.response-body-heading h3 { margin: 0; font-size: 0.85rem; }
+.response-copy { font-size: 0.85rem; }
+.request-response dl div { display: grid; grid-template-columns: minmax(9rem, 1fr) 3fr; gap: 0.75rem; }
+.request-response :is(dt, dd) { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+
+.workbench {
+  display: grid;
+  min-height: 100dvh;
+  grid-template: "sidebar main" 1fr "status status" auto
+    / minmax(14rem, 19rem) minmax(0, 1fr);
+}
+
+.sidebar, .statusbar {
+  background: var(--vscode-sideBar-background);
+}
+
+.editor-toolbar, .editor-heading, .explorer-heading, .entry-actions, .editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editor-toolbar, .editor-heading, .explorer-heading {
+  justify-content: space-between;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+}
+
+.sidebar p { margin: 0.55rem 0.9rem; }
+.workspace-explorer { padding: 0 0.65rem; }
+.workspace-explorer section { padding: 0.75rem 0; }
+.workspace-sections {
+  margin: 0.65rem 0;
+  padding: 0;
+  list-style: none;
+}
+.workspace-section-row {
+  width: 100%;
+  padding: 0.45rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.workspace-section-row[aria-current="true"] {
+  background: var(--vscode-list-activeSelectionBackground);
+}
+.workspace-section-row[aria-current="false"] {
+  padding-block: 0.3rem;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.workspace-section-row:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+.workspace-section-row[data-drop="before"] {
+  box-shadow: inset 0 2px var(--vscode-focusBorder);
+}
+.workspace-section-row[data-drop="after"] {
+  box-shadow: inset 0 -2px var(--vscode-focusBorder);
+}
+.workspace-section-row[aria-current="false"]:is(:hover, :focus-visible) {
+  color: var(--vscode-foreground);
+}
+.workspace-section-contents {
+  margin-inline-start: 0.55rem;
+  padding-inline-start: 0.45rem;
+  border-inline-start: 1px solid var(--vscode-panel-border);
+}
+.workspace-context-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-width: min(24rem, 100vw);
+  max-height: 100vh;
+  padding: 0.25rem;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background);
+  color: var(--vscode-foreground);
+  box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 40%);
+}
+.workspace-context-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.65rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.workspace-context-menu button:is(:hover, :focus-visible) {
+  background: var(--vscode-list-hoverBackground);
+}
+.explorer-heading { padding: 0 0.4rem 0.4rem; }
+.explorer-actions { display: flex; align-items: center; gap: 0.25rem; }
+.explorer-heading h2 {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.explorer-heading > vscode-button::part(base), .explorer-actions > vscode-button::part(base) {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.workspace-explorer .explorer-empty {
+  margin: 0.2rem 0.4rem;
+  padding: 0.65rem;
+}
+
+.workspace-explorer vscode-tree-item::part(wrapper) {
+  align-items: center;
+  min-height: 1.9rem;
+}
+
+.workspace-explorer vscode-tree-item[selected]::part(wrapper) {
+  box-shadow: inset 2px 0 var(--vscode-panelTitle-activeBorder);
+}
+
+.method-label {
+  margin-right: 0.6rem;
+  color: #a7a1fc;
+  font-size: 0.76em;
+  font-weight: 750;
+}
+
+.method-label[data-method="GET"] { color: #6bdd9a; }
+.method-label[data-method="POST"] { color: #ffcb65; }
+.method-label[data-method="DELETE"] { color: #ff8080; }
+
+.environment-list { list-style: none; padding: 0; margin: 0; }
+.environment-list button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.75rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.environment-list button:hover { background: var(--vscode-list-hoverBackground); }
+.environment-list button[aria-current="true"] {
+  background: var(--vscode-list-activeSelectionBackground);
+  box-shadow: inset 2px 0 var(--vscode-panelTitle-activeBorder);
+}
+
+.environment-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-indicator {
+  flex: none;
+  margin-left: auto;
+  padding: 0.1rem 0.4rem;
+  color: #6bdd9a;
+  background: #6bdd9a1a;
+  font-size: 0.75rem;
+}
+
+main { grid-area: main; min-width: 0; }
+.editor-toolbar {
+  min-height: 3.75rem;
+  padding: 0.5rem clamp(1rem, 3vw, 2.5rem);
+  background: var(--vscode-sideBar-background);
+}
+.current-tab { overflow: hidden; color: var(--vscode-descriptionForeground); text-overflow: ellipsis; white-space: nowrap; }
+.dirty-marker { color: var(--vscode-focusBorder); margin-left: 0.4rem; }
+.editor { max-width: 90rem; margin-inline: auto; padding: clamp(1rem, 3vw, 2.5rem); }
+.editor-heading { margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end; gap: 0.8rem 1.5rem; }
+.editor-heading > div:first-child { min-width: min(100%, 15rem); flex: 1; }
+.entry-actions, .editor-controls { flex-wrap: wrap; }
+.environment-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; min-width: 0; }
+.environment-controls select { max-width: 100%; }
+.sign-out {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+.workspace-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  color: var(--vscode-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.workspace-link:hover { background: var(--vscode-list-hoverBackground); }
+.workspace-link:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 2px; }
+.breadcrumb { margin: 0 0 0.25rem; font-size: 0.76rem; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; overflow-wrap: anywhere; }
+.empty-view { margin: clamp(1rem, 3vw, 2.5rem); }
+
+.sharing-dialog, .import-dialog {
+  max-height: 90dvh;
+  padding: 0;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-editor-background);
+  color: inherit;
+}
+.sharing-dialog {
+  width: min(58rem, calc(100vw - 2rem));
+  border-radius: 0.75rem;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+}
+.sharing-dialog-preview { width: min(78rem, calc(100vw - 2rem)); }
+.sharing-dialog::backdrop, .import-dialog::backdrop { background: rgb(0 0 0 / 65%); }
+.import-dialog h2 { margin: 0; font-size: 1rem; }
+.import-dialog { width: min(36rem, 95vw); }
+.import-options { display: grid; gap: 1rem; padding: 1.25rem; }
+.import-options p { margin: 0.5rem 0 0; }
+.import-options form { display: grid; gap: 0.5rem; }
+.import-options form vscode-button { justify-self: start; }
+.sharing-header, .sharing-footer, .sharing-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+}
+.sharing-header, .sharing-preview-bar { border-bottom: 1px solid var(--vscode-panel-border); }
+.sharing-header, .sharing-footer { background: var(--vscode-sideBar-background); }
+.sharing-header > div { flex: 1 1 16rem; min-width: 0; }
+.sharing-header h2 { margin: 0; font-size: 1.35rem; }
+.sharing-header p { margin: 0.25rem 0 0; overflow-wrap: anywhere; }
+.sharing-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+.sharing-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 0.5rem;
+  background: var(--vscode-sideBar-background);
+}
+.sharing-panel h3 { margin: 0; font-size: 1rem; }
+.sharing-panel p { margin: 0.5rem 0 1rem; line-height: 1.5; }
+.sharing-panel-heading, .sharing-row, .sharing-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.sharing-panel-heading, .sharing-owner { justify-content: space-between; }
+.sharing-badge {
+  flex: none;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 1rem;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.sharing-panel fieldset { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+.sharing-panel legend { margin-bottom: 0.5rem; padding: 0; font-size: 0.82rem; font-weight: 600; }
+.sharing-panel ul {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 0.35rem;
+  background: var(--vscode-editor-background);
+  list-style: none;
+}
+.sharing-panel li + li { border-top: 1px solid var(--vscode-panel-border); }
+.sharing-row { min-height: 2.5rem; padding: 0.35rem 0.7rem; }
+label.sharing-row:has(input:enabled) { cursor: pointer; }
+label.sharing-row:has(input:enabled):hover { background: var(--vscode-list-hoverBackground); }
+.sharing-row input { flex: none; margin: 0; }
+.sharing-row span { min-width: 0; overflow-wrap: anywhere; }
+.sharing-row vscode-button { flex: none; }
+.sharing-actions { flex-wrap: wrap; justify-content: flex-end; }
+.sharing-panel .sharing-actions { margin-top: 1rem; }
+.sharing-panel .sharing-empty {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--vscode-panel-border);
+  border-radius: 0.35rem;
+  text-align: center;
+}
+.sharing-preview-bar label { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0; }
+.sharing-preview-bar select { max-width: 100%; border: 1px solid var(--vscode-panel-border); border-radius: 0.35rem; }
+.sharing-footer { border-top: 1px solid var(--vscode-panel-border); }
+.sharing-footer p { flex: 1 1 16rem; margin: 0; }
+.sharing-loading { margin: 0; padding: 1.5rem; }
+.shared-preview { display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr); }
+.shared-preview > .sidebar { grid-area: auto; }
+.shared-preview-content { min-width: 0; border-left: 1px solid var(--vscode-panel-border); }
+@media (max-width: 650px) {
+  .sharing-options { grid-template-columns: minmax(0, 1fr); }
+  .shared-preview { grid-template-columns: 1fr; }
+  .shared-preview-content { border-left: 0; border-top: 1px solid var(--vscode-panel-border); }
+}
+
+.editor-tabs, .request-builder, .request-response, .editor > .rows-editor, .empty-view {
+  padding: clamp(0.85rem, 2vw, 1.4rem);
+  background: var(--vscode-sideBar-background);
+}
+
+.editor-tabs {
+  --vscode-panel-background: var(--vscode-sideBar-background);
+  display: block;
+  padding-block-start: 0.35rem;
+}
+.editor-tabs vscode-tab-header { min-height: 2.65rem; }
+
+.workbench vscode-button::part(base) {
+  border: 0;
+  border-radius: 0;
+  font-weight: 600;
+}
+.workbench .danger-action {
+  --vscode-button-secondaryForeground: #ff8080;
+}
+
+p { color: var(--vscode-descriptionForeground); }
+
+input, select, textarea {
+  min-height: 2.45rem;
+  padding: 0.48rem 0.7rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-inset);
+  color: inherit;
+  font: inherit;
+}
+input[type="checkbox"] { min-height: auto; accent-color: var(--vscode-button-background); }
+
+:is(input, select, textarea, button, summary):focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+input.entry-name {
+  width: 100%;
+  min-width: 9rem;
+  padding: 0;
+  font-size: clamp(1.55rem, 2.6vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  background: transparent;
+}
+
+input.entry-name:hover, input.entry-name:focus { background: var(--surface-inset); }
+
+.request-line { display: flex; align-items: stretch; gap: 0.55rem; }
+.method-input { width: 6.5rem; font: 700 0.86rem var(--mono-font); color: #6bdd9a; }
+.url-input { min-width: 0; flex: 1; font: 0.86rem var(--mono-font); }
+.request-line vscode-button::part(base) { height: 100%; min-width: 5rem; }
+.url-preview { margin: 0.7rem 0 0; overflow-wrap: anywhere; font: 0.82rem/1.5 var(--mono-font); }
+.request-builder { margin-bottom: 1.25rem; }
+.request-send { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+
+.authorization-editor, .body-editor, .rows-editor { padding: 1rem 0; }
+.authorization-editor {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+.auth-details { min-width: 0; max-width: 48rem; }
+.auth-details p { margin: 0.35rem 0; }
+.inherited-auth {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+}
+.inherited-auth-source { margin-top: 0.2rem; color: var(--vscode-descriptionForeground); overflow-wrap: anywhere; }
+.auth-details label + label { margin-top: 0.75rem; }
+.jwt-editor .jwt-base64 { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.75rem; }
+.jwt-editor details, .request-response details { padding: 0.65rem 0.8rem; }
+.jwt-editor details { margin-top: 0.75rem; }
+.jwt-editor details > label { margin-top: 0.75rem; }
+.jwt-editor textarea { width: 100%; min-height: 6rem; font-family: var(--mono-font); }
+.signing-key-editor { display: grid; gap: 0.55rem; margin: 0.6rem 0 1rem; }
+.signing-key-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.jwt-editor h3 { font-size: 0.9rem; }
+.authorization-editor label, .body-editor label { display: grid; gap: 0.45rem; align-content: start; }
+.authorization-editor :is(input, select) { min-width: 0; }
+.body-editor label { display: inline-grid; width: 10rem; margin: 0 0.75rem 0.75rem 0; }
+.monaco-body-editor { height: 19rem; overflow: hidden; }
+.request-body-frame {
+  height: 20rem;
+  min-height: 8rem;
+  padding-bottom: 1rem;
+  background: var(--vscode-editor-background);
+  overflow: hidden;
+  resize: vertical;
+}
+.request-body-frame > .monaco-body-editor { height: 100%; }
+
+.rows-table { margin: 0.8rem 0; overflow: auto; }
+.dynamic-header-help { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.65rem; margin-top: 0.4rem; color: var(--vscode-descriptionForeground); }
+.pre-request-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin: 0.8rem 0 0; color: var(--vscode-descriptionForeground); }
+.rows-editor table { width: 100%; border-collapse: collapse; }
+.rows-editor th, .rows-editor td { padding: 0.55rem 0.65rem; text-align: left; }
+.rows-editor tbody tr:nth-child(odd) { background: var(--vscode-editor-background); }
+.rows-editor th { color: var(--vscode-descriptionForeground); background: var(--vscode-sideBar-background); font-size: 0.78rem; }
+.rows-editor :is(th, td):first-child { width: 1%; text-align: center; }
+.rows-editor :is(th, td):last-child { width: 1%; }
+.rows-editor .rows-empty { padding: 1.2rem; text-align: center; color: var(--vscode-descriptionForeground); }
+.rows-editor :is(input:not([type="checkbox"]), textarea) { width: 100%; min-width: 5rem; }
+.rows-editor textarea { display: block; field-sizing: content; min-height: 2.45rem; resize: vertical; overflow-wrap: anywhere; }
+
+.import-notice, .error-banner {
+  background: #332a23;
+  padding: 0.8rem;
+  margin: 0 0 1rem;
+  overflow-wrap: anywhere;
+}
+.import-notice summary, .request-response summary, .jwt-editor summary { cursor: pointer; }
+.import-notice ul { margin-bottom: 0; }
+.error-banner { margin: 1rem; }
+.request-response .error-banner { margin: 0.8rem 0 0; }
+.statusbar {
+  grid-area: status;
+  min-height: 2rem;
+  padding: 0.4rem 1rem;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 46rem) {
+  .workbench { grid-template: "sidebar" auto "main" 1fr "status" auto / 1fr; }
+  .editor-toolbar, .authorization-editor { gap: 0.55rem; }
+}
+
+@media (max-width: 28rem) {
+  .authorization-editor { grid-template-columns: 1fr; }
+  .editor-toolbar { flex-wrap: wrap; }
+  .request-line { flex-wrap: wrap; }
+  .url-input { flex-basis: calc(100% - 7.1rem); }
+  .request-line vscode-button { width: 100%; }
+}
