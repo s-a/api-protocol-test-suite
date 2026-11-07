@@ -1,0 +1,50 @@
+{
+  "name": "api-protocol-test-suite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite --config apps/web/vite.config.ts",
+    "dev:server": "node --use-system-ca --env-file-if-exists=.env --watch apps/server/server.mjs",
+    "lint": "eslint .",
+    "test": "node --test",
+    "check": "tsc --noEmit -p apps/web/tsconfig.json && node --check apps/server/server.mjs && node --check apps/server/http-server.mjs && node --check apps/server/accounts.mjs && node --check apps/server/accounts-cli.mjs && node --check apps/server/login.mjs && node --check apps/server/workspace.mjs && node --check apps/server/workspace-sharing.mjs && node --check apps/server/workspace-migration.mjs && node --check apps/server/user-data.mjs && node --check apps/server/collection-exchange.mjs && node --check apps/server/postman.mjs && node --check apps/server/profiles.mjs && node --check apps/server/send-request.mjs",
+    "build": "npm run check && vite build --config apps/web/vite.config.ts",
+    "start": "node --use-system-ca --env-file-if-exists=.env apps/server/server.mjs"
+  },
+  "dependencies": {
+    "@faker-js/faker": "10.6.0",
+    "@postman/wsdl-to-postman": "3.0.0",
+    "@vscode-elements/react-elements": "2.4.0",
+    "@xmldom/xmldom": "0.9.12",
+    "fflate": "0.8.3",
+    "postman-collection": "5.3.1",
+    "postman-sandbox": "6.9.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "uuid": "11.1.1",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.14.0",
+    "monaco-editor": "0.55.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.6"
+  },
+  "overrides": {
+    "@faker-js/faker": "10.6.0",
+    "dompurify": "3.4.17",
+    "minimatch": "11.0.5",
+    "uuid": "11.1.1"
+  }
+}

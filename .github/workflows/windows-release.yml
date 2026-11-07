@@ -1,0 +1,72 @@
+name: Windows x64 packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    outputs:
+      node-version: ${{ steps.node.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Resolve the latest Node.js 24 release
+        id: node
+        shell: pwsh
+        run: |
+          $releases = Invoke-RestMethod 'https://nodejs.org/dist/index.json'
+          $release = $releases | Where-Object {
+            $_.version -match '^v24\.\d+\.\d+$' -and $_.files -contains 'win-x64-zip'
+          } | Sort-Object { [version]$_.version.Substring(1) } -Descending | Select-Object -First 1
+          if (!$release) { throw 'No Node.js 24 release for Windows x64 was found.' }
+          "version=$($release.version.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+          architecture: x64
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Build release archives
+        shell: pwsh
+        run: ./.github/scripts/package-windows.ps1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'windows-packages')
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-packages
+          path: ${{ runner.temp }}/windows-packages/*.zip
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: windows-x64-packages
+          path: packages
+
+      - name: Publish the Windows x64 ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          NODE_VERSION: ${{ needs.package.outputs.node-version }}
+        run: |
+          gh release create "$RELEASE_TAG" packages/*.zip --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --title "$RELEASE_TAG" \
+            --notes "Windows x64 packages. Standalone includes Node.js v${NODE_VERSION}."

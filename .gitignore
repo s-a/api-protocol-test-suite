@@ -1,0 +1,50 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Local environment files and their backups
+.env
+.env.*
+.env-*
+.env~
+*.local
+*.local.*
+
+# Runtime data, including copies under their default names
+data/
+workspace.json
+workspace.json.*
+profiles.json
+profiles.json.*
+accounts.json
+accounts.json.*
+targets.json
+targets.json.*
+jwt-keys.json
+jwt-keys.json.*
+*.tmp
+
+# TLS certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Postman collections and exports
+exports/
+*.zip
+*.resources/
+*.request.yaml
+*.request.yml
+*.postman_collection.json
+*.postman_environment.json
+*.postman_globals.json
+
+*.log
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
