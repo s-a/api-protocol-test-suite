@@ -41,7 +41,9 @@ try {
         Where-Object { $_.Extension -in '.mjs', '.cjs', '.ts' -and $_.Name -notlike '*.test.*' } |
         Copy-Item -Destination $server
     Copy-Item -LiteralPath (Join-Path $project 'apps/server/favicon.png') -Destination $server
+    Copy-Item -LiteralPath (Join-Path $project 'apps/server/themes.css') -Destination $server
     Copy-Item -LiteralPath (Join-Path $project 'apps/web/dist') -Destination $web -Recurse
+    Copy-Item -LiteralPath (Join-Path $project 'third-party-licenses') -Destination $app -Recurse
     Copy-Item -LiteralPath ('package.json', 'package-lock.json', 'README.md', '.env.example' | ForEach-Object { Join-Path $project $_ }) -Destination $app
 
     Write-Launcher 'node.exe'

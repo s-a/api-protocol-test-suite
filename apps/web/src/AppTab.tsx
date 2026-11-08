@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import { App } from './App'
 import { appTabId } from './app-api'
@@ -6,6 +7,7 @@ type Access = 'checking' | 'active' | 'occupied' | 'unavailable'
 const endpoint = '/api/app-tab'
 
 export function AppTab() {
+  const { t } = useTranslation()
   const [access, setAccess] = useState<Access>('checking')
   const [accountId, setAccountId] = useState<string | null>(null)
   const workbench = useRef<HTMLDivElement>(null)
@@ -106,10 +108,10 @@ export function AppTab() {
   return <>
     {access !== 'active' && <main className="empty-view" role="status">
       {access === 'occupied' ? <>
-        <h1>App access paused</h1>
-        <p>Another tab may still have access to this account. Open anyway to continue here and block that tab.</p>
-        <button type="button" onClick={() => takeOver.current?.()}>Open anyway</button>
-      </> : <p>{access === 'unavailable' ? 'The server is unavailable. Retrying…' : 'Checking app access…'}</p>}
+        <h1>{t('accessPaused')}</h1>
+        <p>{t('accessOccupied')}</p>
+        <button type="button" onClick={() => takeOver.current?.()}>{t('openAnyway')}</button>
+      </> : <p>{access === 'unavailable' ? t('unavailable') : t('checking')}</p>}
     </main>}
     {accountId !== null && <div ref={workbench} hidden={access !== 'active'} inert={access !== 'active'}>
       <App key={accountId} accountId={accountId} />

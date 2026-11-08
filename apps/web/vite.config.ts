@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const backend = `http://127.0.0.1:${process.env.PORT || 3000}`
-const backendRoutes = /^\/(?:api(?:\/|\?|$)|(?:login|logout|favicon\.(?:png|ico))(?:\?|$))/
+const backendRoutes = /^\/(?:api(?:\/|\?|$)|(?:login(?:\/totp)?|logout|favicon\.(?:png|ico))(?:\?|$))/
 
 export default defineConfig({
   root: 'apps/web',
@@ -37,7 +37,7 @@ export default defineConfig({
     fs: {
       allow: [
         '.', '../../node_modules',
-        '../server/body-format.ts', '../server/dynamic-variables.ts', '../server/jwt-settings.ts',
+        '../server/themes.css', '../server/body-format.ts', '../server/dynamic-variables.ts', '../server/jwt-settings.ts',
       ],
     },
   },

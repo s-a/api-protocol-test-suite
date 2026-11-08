@@ -1,3 +1,5 @@
+import { translateError } from '../i18n'
+import i18n from '../i18n'
 import { fetchApp } from '../app-api'
 import { VscodeButton } from '@vscode-elements/react-elements'
 import { useEffect, useRef, useState } from 'react'
@@ -21,11 +23,11 @@ function SharedPreview({ workspace }: { workspace: Workspace }) {
   const activeEnvironment = workspace.environments.find(environment => environment.id === workspace.activeEnvironmentId)
   return <div className="shared-preview">
     <Explorer workspace={workspace} selection={selection} onSelect={next => setPath(selectionPath(next))} />
-    <section className="shared-preview-content" aria-label="Shared workspace preview">
+    <section className="shared-preview-content" aria-label={i18n.t("Shared workspace preview")}>
       {entry ? <Editor key={entry.id} entry={entry} collection={collection} authorizationSource={authorizationSource}
         parentScripts={parentScripts} showScripts={tab === 'scripts'} environment={activeEnvironment}
         onNavigate={setPath} onEdit={() => {}} disabled readOnly />
-        : <p className="empty-view">This workspace is empty.</p>}
+        : <p className="empty-view">{i18n.t("This workspace is empty.")}</p>}
     </section>
   </div>
 }
@@ -61,7 +63,7 @@ export function SharingDialog({ dirty, onClose, onCopied }: {
     try {
       await action()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Workspace sharing request failed.')
+      setError(reason instanceof Error ? reason.message : i18n.t("Workspace sharing request failed."))
     } finally {
       setBusy(false)
     }
@@ -86,7 +88,7 @@ export function SharingDialog({ dirty, onClose, onCopied }: {
       }
       const workspace = await readWorkspace(response)
       const version = response.headers.get('ETag')
-      if (!version) throw new Error('The shared workspace version is unavailable.')
+      if (!version) throw new Error(i18n.t("The shared workspace version is unavailable."))
       setPreviewSectionId(workspace.sections?.[0]?.id ?? '')
       setPreview({ owner, workspace, version })
     })
@@ -119,40 +121,40 @@ export function SharingDialog({ dirty, onClose, onCopied }: {
     onCancel={event => { if (busy) event.preventDefault() }}>
     <header className="sharing-header">
       <div>
-        <h2 id="sharing-title">{preview ? 'Shared workspace' : 'Workspace sharing'}</h2>
-        <p>{preview ? `Shared by ${preview.owner}` : 'Manage access to your saved sections and browse workspaces shared with you.'}</p>
+        <h2 id="sharing-title">{preview ? i18n.t("Shared workspace") : i18n.t("Workspace sharing")}</h2>
+        <p>{preview ? `${i18n.language === "de" ? "Geteilt von" : "Shared by"} ${preview.owner}` : i18n.t("Manage access to your saved sections and browse workspaces shared with you.")}</p>
       </div>
-      <VscodeButton secondary disabled={busy} onClick={() => dialog.current?.close()}>Close</VscodeButton>
+      <VscodeButton secondary disabled={busy} onClick={() => dialog.current?.close()}>{i18n.t("Close")}</VscodeButton>
     </header>
-    {error && <p className="error-banner" role="alert">{error}</p>}
+    {error && <p className="error-banner" role="alert">{translateError(error)}</p>}
     {preview ? <>
       <div className="sharing-preview-bar">
-        <label>Section
+        <label>{i18n.t("Section")}
           <select value={previewSectionId} disabled={busy} onChange={event => setPreviewSectionId(event.target.value)}>
             {preview.workspace.sections?.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
           </select>
         </label>
-        <span className="sharing-badge">Read-only</span>
+        <span className="sharing-badge">{i18n.t("Read-only")}</span>
       </div>
       {previewSection && <SharedPreview key={previewSection.id} workspace={sectionWorkspace(preview.workspace, previewSection)} />}
       <footer className="sharing-footer">
-        <p>{dirty ? 'Save or discard your changes before copying.'
-          : 'Copying adds all shared sections and their environments to your workspace.'}</p>
+        <p>{dirty ? i18n.t("Save or discard your changes before copying.")
+          : i18n.t("Copying adds all shared sections and their environments to your workspace.")}</p>
         <div className="sharing-actions">
-          <VscodeButton secondary disabled={busy} onClick={backToSharing}>Back</VscodeButton>
-          <VscodeButton disabled={busy || dirty} onClick={copy}>Copy to my workspace</VscodeButton>
+          <VscodeButton secondary disabled={busy} onClick={backToSharing}>{i18n.t("Back")}</VscodeButton>
+          <VscodeButton disabled={busy || dirty} onClick={copy}>{i18n.t("Copy to my workspace")}</VscodeButton>
         </div>
       </footer>
     </> : sharing ? <div className="sharing-options">
       <section className="sharing-panel">
         <div className="sharing-panel-heading">
-          <h3>My workspace</h3>
+          <h3>{i18n.t("My workspace")}</h3>
           <span className="sharing-badge" role="status">{sharing.sectionIds.length
-            ? `${sharing.sectionIds.length} shared` : 'Private'}</span>
+            ? `${sharing.sectionIds.length} ${i18n.language === "de" ? "geteilt" : "shared"}` : i18n.t("Private")}</span>
         </div>
-        <p>All signed-in users can access the sections you share, including collections, environment values, stored credentials, and future saves.</p>
+        <p>{i18n.t("All signed-in users can access the sections you share, including collections, environment values, stored credentials, and future saves.")}</p>
         <fieldset disabled={busy}>
-          <legend>Sections to share</legend>
+          <legend>{i18n.t("Sections to share")}</legend>
           <ul>{sharing.sections.map(({ id, name }) => <li key={id}>
             <label className="sharing-row">
               <input type="checkbox" checked={selectedIds.includes(id)} onChange={event => {
@@ -164,19 +166,19 @@ export function SharingDialog({ dirty, onClose, onCopied }: {
         </fieldset>
         <div className="sharing-actions">
           {sharing.sectionIds.length > 0 && <VscodeButton className="danger-action" secondary disabled={busy}
-            onClick={() => saveSharing([])}>Stop sharing</VscodeButton>}
-          <VscodeButton disabled={busy || !selectionChanged} onClick={() => saveSharing(selectedIds)}>Save sharing</VscodeButton>
+            onClick={() => saveSharing([])}>{i18n.t("Stop sharing")}</VscodeButton>}
+          <VscodeButton disabled={busy || !selectionChanged} onClick={() => saveSharing(selectedIds)}>{i18n.t("Save sharing")}</VscodeButton>
         </div>
       </section>
       <section className="sharing-panel">
-        <h3>Shared by other users</h3>
-        <p>Preview a shared workspace or copy its sections into yours.</p>
+        <h3>{i18n.t("Shared by other users")}</h3>
+        <p>{i18n.t("Preview a shared workspace or copy its sections into yours.")}</p>
         {sharing.owners.length ? <ul>{sharing.owners.map(owner => <li className="sharing-row sharing-owner" key={owner}>
           <span>{owner}</span>
-          <VscodeButton secondary disabled={busy} aria-label={`Preview workspace shared by ${owner}`}
-            onClick={() => openPreview(owner)}>Preview</VscodeButton>
-        </li>)}</ul> : <p className="sharing-empty">No shared workspaces are available.</p>}
+          <VscodeButton secondary disabled={busy} aria-label={`${i18n.language === "de" ? "Vorschau des geteilten Arbeitsbereichs von" : "Preview workspace shared by"} ${owner}`}
+            onClick={() => openPreview(owner)}>{i18n.t("Preview")}</VscodeButton>
+        </li>)}</ul> : <p className="sharing-empty">{i18n.t("No shared workspaces are available.")}</p>}
       </section>
-    </div> : !error && <p className="sharing-loading" role="status">Loading shared workspaces…</p>}
+    </div> : !error && <p className="sharing-loading" role="status">{i18n.t("Loading shared workspaces…")}</p>}
   </dialog>
 }

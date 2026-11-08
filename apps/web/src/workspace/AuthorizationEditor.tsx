@@ -1,3 +1,5 @@
+import { loadMonacoBodyEditor } from './loadMonacoBodyEditor'
+import i18n from '../i18n'
 import { lazy, Suspense, useId } from 'react'
 import { defaultJwt, jwtAlgorithms } from '../../../server/jwt-settings.ts'
 import type { JwtSettings } from '../../../server/jwt-settings.ts'
@@ -6,15 +8,15 @@ import { WorkspaceLink } from './WorkspaceLink'
 import { SigningKeyEditor } from './SigningKeyEditor'
 import type { VariableHover } from './MonacoBodyEditor'
 
-const MonacoBodyEditor = lazy(() => import('./MonacoBodyEditor'))
+const MonacoBodyEditor = lazy(loadMonacoBodyEditor)
 
-const authLabels: Record<Auth['type'], string> = {
-  inherit: 'Inherit auth from parent',
-  none: 'No Auth',
-  basic: 'Basic Auth',
-  bearer: 'Bearer Token',
-  jwt: 'JWT Bearer',
-}
+const authLabels = (): Record<Auth['type'], string> => ({
+  inherit: i18n.t("Inherit auth from parent"),
+  none: i18n.t("No Auth"),
+  basic: i18n.t("Basic Auth"),
+  bearer: i18n.t("Bearer Token"),
+  jwt: i18n.t("JWT Bearer"),
+})
 
 function emptyAuth(type: Auth['type']): Auth {
   if (type === 'basic') return { type, username: '', password: '' }
@@ -32,40 +34,40 @@ function JwtEditor({ auth, onChange, disabled, readOnly, variableHover }: {
   const reference = auth.secretRef.startsWith('{{') && variableHover && Object.hasOwn(variableHover.values, name)
     ? variableHover.values[name] : name
   return <div className="jwt-editor">
-    <label>Add JWT token to
+    <label>{i18n.t("Add JWT token to")}
       <select value={auth.addTokenTo} disabled={disabled} onChange={event => onChange({ ...auth, addTokenTo: event.target.value === 'header' ? 'header' : 'queryParam' })}>
-        <option value="header">Request Header</option>
-        <option value="queryParam">Query Param</option>
+        <option value="header">{i18n.t("Request Header")}</option>
+        <option value="queryParam">{i18n.t("Query Param")}</option>
       </select>
     </label>
-    <label>Algorithm
+    <label>{i18n.t("Algorithm")}
       <select value={auth.algorithm} disabled={disabled} onChange={event => onChange({ ...auth, algorithm: event.target.value as JwtSettings['algorithm'] })}>
         {jwtAlgorithms.map(algorithm => <option key={algorithm}>{algorithm}</option>)}
       </select>
     </label>
-    <label>{hmac ? 'Secret' : 'Private key'}
-      <input value={auth.secretRef} aria-describedby={keyHelp} placeholder={hmac ? 'Enter secret name' : 'Enter private key name'}
+    <label>{hmac ? i18n.t("Secret") : i18n.t("Private key")}
+      <input value={auth.secretRef} aria-describedby={keyHelp} placeholder={hmac ? i18n.t("Enter secret name") : i18n.t("Enter private key name")}
         autoComplete="off" spellCheck={false} disabled={disabled} onChange={event => onChange({ ...auth, secretRef: event.target.value })} />
     </label>
     {hmac && <label className="jwt-base64">
       <input type="checkbox" checked={auth.base64} disabled={disabled} onChange={event => onChange({ ...auth, base64: event.target.checked })} />
-      Secret Base64 encoded
+      {i18n.t("Secret Base64 encoded")}
     </label>}
-    <p id={keyHelp}>{readOnly ? 'Signing keys are stored separately from the shared workspace.'
-      : 'Enter the name configured for this signing key on the server.'}</p>
+    <p id={keyHelp}>{readOnly ? i18n.t("Signing keys are stored separately from the shared workspace.")
+      : i18n.t("Enter the name configured for this signing key on the server.")}</p>
     {!readOnly && <SigningKeyEditor key={`${reference}:${auth.algorithm}`} reference={reference} algorithm={auth.algorithm}
       baseUrl={variableHover?.values.baseUrl} disabled={disabled} />}
-    <h3>Payload</h3>
-    <Suspense fallback={<p role="status">Loading editor…</p>}>
-      <MonacoBodyEditor label="JWT payload" value={auth.payload} format="json" disabled={disabled} variableHover={variableHover} onChange={payload => onChange({ ...auth, payload })} />
+    <h3>{i18n.t("Payload")}</h3>
+    <Suspense fallback={<p role="status">{i18n.t("Loading editor…")}</p>}>
+      <MonacoBodyEditor label={i18n.t("JWT payload")} value={auth.payload} format="json" disabled={disabled} variableHover={variableHover} onChange={payload => onChange({ ...auth, payload })} />
     </Suspense>
     <details>
-      <summary>Advanced configuration</summary>
+      <summary>{i18n.t("Advanced configuration")}</summary>
       {auth.addTokenTo === 'header'
-        ? <label>Request header prefix<input value={auth.headerPrefix} disabled={disabled} onChange={event => onChange({ ...auth, headerPrefix: event.target.value })} /></label>
-        : <label>Query parameter key<input value={auth.queryParamKey} disabled={disabled} onChange={event => onChange({ ...auth, queryParamKey: event.target.value })} /></label>}
-      <h3>JWT headers</h3>
-      <textarea aria-label="JWT headers" spellCheck={false} value={auth.header} disabled={disabled} onChange={event => onChange({ ...auth, header: event.target.value })} />
+        ? <label>{i18n.t("Request header prefix")}<input value={auth.headerPrefix} disabled={disabled} onChange={event => onChange({ ...auth, headerPrefix: event.target.value })} /></label>
+        : <label>{i18n.t("Query parameter key")}<input value={auth.queryParamKey} disabled={disabled} onChange={event => onChange({ ...auth, queryParamKey: event.target.value })} /></label>}
+      <h3>{i18n.t("JWT headers")}</h3>
+      <textarea aria-label={i18n.t("JWT headers")} spellCheck={false} value={auth.header} disabled={disabled} onChange={event => onChange({ ...auth, header: event.target.value })} />
     </details>
   </div>
 }
@@ -81,25 +83,25 @@ export function AuthorizationEditor({ auth, source, onNavigate, onChange, disabl
 }) {
   return (
     <div className="authorization-editor">
-      <label>Auth Type
+      <label>{i18n.t("Auth Type")}
         <select value={auth.type} disabled={disabled} onChange={event => onChange(emptyAuth(event.target.value as Auth['type']))}>
-          {Object.entries(authLabels).map(([type, label]) => <option value={type} key={type}>{label}</option>)}
+          {Object.entries(authLabels()).map(([type, label]) => <option value={type} key={type}>{label}</option>)}
         </select>
       </label>
       <div className="auth-details">
         {auth.type === 'inherit' && (source ? <div className="inherited-auth">
           <div>
-            <strong>{authLabels[source.auth.type]}</strong>
-            <div className="inherited-auth-source">Inherited from {source.name}</div>
+            <strong>{authLabels()[source.auth.type]}</strong>
+            <div className="inherited-auth-source">{i18n.language === "de" ? "Übernommen von" : "Inherited from"} {source.name}</div>
           </div>
-          <WorkspaceLink href={source.href} onNavigate={onNavigate}>{readOnly ? 'View in Parent' : 'Edit in Parent'}</WorkspaceLink>
-        </div> : <p>No parent authorization is configured.</p>)}
-        {auth.type === 'none' && <p>No authorization is configured.</p>}
+          <WorkspaceLink href={source.href} onNavigate={onNavigate}>{readOnly ? i18n.t("View in Parent") : i18n.t("Edit in Parent")}</WorkspaceLink>
+        </div> : <p>{i18n.t("No parent authorization is configured.")}</p>)}
+        {auth.type === 'none' && <p>{i18n.t("No authorization is configured.")}</p>}
         {auth.type === 'basic' && <>
-          <label>Username
+          <label>{i18n.t("Username")}
             <input value={auth.username} disabled={disabled} onChange={event => onChange({ ...auth, username: event.target.value })} />
           </label>
-          <label>Password
+          <label>{i18n.t("Password")}
             <input type="password" autoComplete="new-password" value={auth.password} disabled={disabled}
               onChange={event => onChange({ ...auth, password: event.target.value })} />
           </label>

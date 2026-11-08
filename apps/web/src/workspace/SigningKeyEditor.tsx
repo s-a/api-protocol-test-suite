@@ -1,3 +1,5 @@
+import { translateError } from '../i18n'
+import i18n from '../i18n'
 import { fetchApp } from '../app-api'
 import { VscodeButton } from '@vscode-elements/react-elements'
 import { useState } from 'react'
@@ -30,17 +32,17 @@ export function SigningKeyEditor({ reference, algorithm, baseUrl, disabled }: {
         body: JSON.stringify(reveal ? { reference } : { reference, origin, algorithm, key }),
       })
       const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Could not access the signing key.')
+      if (!response.ok) throw new Error(result.error || i18n.t("Could not access the signing key."))
       if (reveal) {
         setKey(result.key)
         setOrigin(result.origin)
         setMode('show')
       } else {
         close()
-        setMessage('Signing key saved on the server.')
+        setMessage(i18n.t("Signing key saved on the server."))
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not access the signing key.')
+      setError(reason instanceof Error ? reason.message : i18n.t("Could not access the signing key."))
     } finally {
       setBusy(false)
     }
@@ -51,28 +53,28 @@ export function SigningKeyEditor({ reference, algorithm, baseUrl, disabled }: {
   return <div className="signing-key-editor">
     <div className="signing-key-actions">
       {!mode && <>
-        <VscodeButton secondary disabled={blocked || !named} onClick={() => void access(true)}>Show key</VscodeButton>
-        <VscodeButton secondary disabled={blocked || !named} onClick={() => { setError(''); setMessage(''); setMode('edit') }}>Set key</VscodeButton>
+        <VscodeButton secondary disabled={blocked || !named} onClick={() => void access(true)}>{i18n.t("Show key")}</VscodeButton>
+        <VscodeButton secondary disabled={blocked || !named} onClick={() => { setError(''); setMessage(''); setMode('edit') }}>{i18n.t("Set key")}</VscodeButton>
       </>}
       {mode === 'show' && <>
-        <VscodeButton secondary disabled={blocked} onClick={() => setMode('edit')}>Edit key</VscodeButton>
-        <VscodeButton secondary onClick={close}>Hide key</VscodeButton>
+        <VscodeButton secondary disabled={blocked} onClick={() => setMode('edit')}>{i18n.t("Edit key")}</VscodeButton>
+        <VscodeButton secondary onClick={close}>{i18n.t("Hide key")}</VscodeButton>
       </>}
     </div>
     {mode && <>
-      <label>Target origin
+      <label>{i18n.t("Target origin")}
         <input readOnly={mode === 'show'} disabled={blocked} value={origin} onChange={event => setOrigin(event.target.value)} placeholder="https://api.example.test" />
       </label>
-      <label>Signing key
+      <label>{i18n.t("Signing key")}
         <textarea readOnly={mode === 'show'} disabled={blocked} value={key} spellCheck={false} autoComplete="off"
           onChange={event => setKey(event.target.value)} />
       </label>
       {mode === 'edit' && <div className="signing-key-actions">
-        <VscodeButton disabled={blocked || !origin.trim() || !key.trim()} onClick={() => void access(false)}>Save key</VscodeButton>
-        <VscodeButton secondary disabled={busy} onClick={close}>Cancel</VscodeButton>
+        <VscodeButton disabled={blocked || !origin.trim() || !key.trim()} onClick={() => void access(false)}>{i18n.t("Save key")}</VscodeButton>
+        <VscodeButton secondary disabled={busy} onClick={close}>{i18n.t("Cancel")}</VscodeButton>
       </div>}
     </>}
     {message && <p role="status">{message}</p>}
-    {error && <p role="alert">{error}</p>}
+    {error && <p role="alert">{translateError(error)}</p>}
   </div>
 }
