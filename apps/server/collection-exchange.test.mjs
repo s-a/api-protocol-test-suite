@@ -77,6 +77,46 @@ test('downloads a collection ZIP and imports a copy through the workspace API', 
   assert.equal(Buffer.from(retainedArchive[`${rootName}/${resource.path}`]).toString('base64'), resource.content)
 })
 
+test('imports a collection with its environment without replacing existing variables', { timeout: 15000 }, async (t) => {
+  const { address, request: fetch } = await startServer(t)
+  const request = (path, options) => fetch(address + path, { ...options, signal: t.signal })
+  const variables = [
+    { id: 'base-url', key: 'baseUrl', value: 'https://example.invalid', enabled: true },
+    { id: 'disabled', key: 'unused', value: '', enabled: false },
+  ]
+  const collection = { id: 'source', name: 'Example', auth: { type: 'none' }, items: [] }
+  const save = data => request('/api/workspace', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  })
+  assert.equal((await save({ collections: [collection], activeEnvironmentId: 'source-env',
+    environments: [{ id: 'source-env', name: 'Example Environment', variables }],
+  })).status, 200)
+  const exported = await request('/api/collections/source/export')
+  assert.equal(exported.status, 200)
+  const zip = await exported.arrayBuffer()
+  const existing = { id: 'existing', name: 'Example Environment', variables: [
+    { ...variables[0], value: 'https://other.example.invalid' },
+  ] }
+  assert.equal((await save({ collections: [], activeEnvironmentId: existing.id, environments: [existing] })).status, 200)
+
+  const upload = () => request('/api/collections/import', {
+    method: 'POST', headers: { 'Content-Type': 'application/zip', 'Workspace-Section': 'root' }, body: zip,
+  })
+  for (const count of [1, 2]) {
+    assert.equal((await upload()).status, 201)
+    const result = await (await request('/api/workspace')).json()
+    const [original, imported] = result.environments
+    assert.equal(result.environments.length, 2)
+    assert.deepEqual(original, existing)
+    assert.equal(imported.name, existing.name)
+    assert.deepEqual(imported.variables.map(({ key, value, enabled }) => ({ key, value, enabled })),
+      variables.map(({ key, value, enabled }) => ({ key, value, enabled })))
+    const section = result.sections.find(({ environmentId }) => environmentId === imported.id)
+    assert.equal(section.collectionIds.length, count)
+    assert.deepEqual(section.collectionIds, result.collections.map(({ id }) => id))
+  }
+})
+
 test('sends imported SOAP XML using collection variables in the URL, headers, body and scripts', { timeout: 15000 }, async (t) => {
   const soapNamespace = 'http://www.w3.org/2003/05/soap-envelope'
   const envelope = content => `<soap:Envelope xmlns:soap="${soapNamespace}"><soap:Body>${content}</soap:Body></soap:Envelope>`

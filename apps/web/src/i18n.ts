@@ -250,6 +250,8 @@ const serverErrors: Record<string, string> = {
   'Invalid collection file content.': 'Ungültiger Inhalt der Sammlungsdatei.', 'The extracted collection is too large.': 'Die entpackte Sammlung ist zu groß.',
   'The collection ZIP has an invalid size.': 'Die ZIP-Datei der Sammlung hat eine ungültige Größe.',
   'Could not read the Postman collection ZIP.': 'Die ZIP-Datei der Postman-Sammlung konnte nicht gelesen werden.',
+  'Invalid Postman environment file.': 'Die Postman-Umgebungsdatei ist ungültig.',
+  'Invalid Postman environment variable.': 'Eine Postman-Umgebungsvariable ist ungültig.',
   'The generated collection is too large.': 'Die erzeugte Sammlung ist zu groß.',
   'Imported Postman folders cannot be moved between scopes.': 'Importierte Postman-Ordner können nicht zwischen Bereichen verschoben werden.',
   'Imported Postman requests cannot be moved between scopes.': 'Importierte Postman-Anfragen können nicht zwischen Bereichen verschoben werden.',

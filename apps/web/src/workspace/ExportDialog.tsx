@@ -10,7 +10,9 @@ export function ExportDialog({ name, onClose, onConfirm }: { name: string, onClo
   return <dialog ref={dialog} className="export-dialog" role="alertdialog"
     aria-labelledby="export-title" aria-describedby="export-target export-warning" onClose={onClose}>
     <h2 id="export-title">{i18n.t("Exported data may contain secrets")}</h2>
-    <p id="export-target">{i18n.language === "de" ? `„${name}“ wird exportiert.` : `You are about to export “${name}”.`}</p>
+    <p id="export-target">{i18n.language === 'de'
+      ? `„${name}“ wird exportiert. Ist eine Umgebung gespeichert, enthält die ZIP-Datei auch ihre Variablenwerte.`
+      : `The ZIP includes “${name}” and any saved environment with its variable values.`}</p>
     <p id="export-warning">
       {i18n.language === 'de' ? 'Die exportierten Daten können Passwörter, API-Schlüssel oder andere vertrauliche Informationen enthalten. Die Daten vor der Weitergabe prüfen und den Export nur an berechtigte Empfänger weitergeben.' : 'The exported data may contain passwords, API keys, or other confidential information. Review the data before sharing it. You are responsible for sharing the export only with authorized recipients.'}
     </p>

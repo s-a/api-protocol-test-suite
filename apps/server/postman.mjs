@@ -7,6 +7,7 @@ import { inferBodyFormat, isBodyFormat } from './body-format.ts'
 import { defaultJwt, jwtSettings } from './jwt-settings.ts'
 
 const definitionName = '.resources/definition.yaml'
+const environmentSuffix = '.postman_environment.json'
 const requestSuffix = /\.request\.ya?ml$/i
 const definitionSuffix = /(?:^|\/)\.resources\/definition\.ya?ml$/i
 const maxFiles = 2000
@@ -368,12 +369,35 @@ export function importPostmanZip(bytes) {
     if (error instanceof PostmanExchangeError) throw error
     reject('Could not read the Postman collection ZIP.')
   }
+  const roots = new Set(entries.map(([path]) => path.split('/')[0]))
+  const environmentEntry = entries.find(([path]) => path.endsWith(environmentSuffix) &&
+    roots.has(path.slice(0, -environmentSuffix.length)))
+  if (environmentEntry) entries = entries.filter(entry => entry !== environmentEntry)
   const root = entries[0]?.[0].split('/')[0]
   const hasWrapper = root && root !== '.resources' && entries.every(([path]) => path.startsWith(`${root}/`))
   const files = new Map(hasWrapper
     ? entries.filter(([path]) => path !== `${root}/`).map(([path, content]) => [path.slice(root.length + 1), content])
     : entries)
-  return importTree(files, hasWrapper ? root : 'Imported Collection')
+  const collection = importTree(files, hasWrapper ? root : 'Imported Collection')
+  if (environmentEntry) collection.environment = readPostmanEnvironment(environmentEntry[1])
+  return collection
+}
+
+function readPostmanEnvironment(bytes) {
+  let data
+  try {
+    data = JSON.parse(textDecoder.decode(bytes))
+  } catch {
+    reject('Invalid Postman environment file.')
+  }
+  if (data?._postman_variable_scope !== 'environment' || typeof data.name !== 'string' || !data.name.trim() ||
+      !Array.isArray(data.values)) reject('Invalid Postman environment file.')
+  const variables = data.values.map(row => {
+    if (typeof row?.key !== 'string' || typeof row.value !== 'string' ||
+        (row.enabled !== undefined && typeof row.enabled !== 'boolean')) reject('Invalid Postman environment variable.')
+    return { id: randomUUID(), key: row.key, value: row.value, enabled: row.enabled ?? true }
+  })
+  return { id: randomUUID(), name: data.name, variables }
 }
 
 export function importGeneratedPostmanCollection({ items, ...definition }) {
@@ -609,7 +633,7 @@ function writeNode(files, path, originalPath, node, defaultName, defaultAuth, or
   }
 }
 
-export function exportPostmanZip(collection) {
+export function exportPostmanZip(collection, environment) {
   const exchange = collection.exchange
   const rootName = exchange?.rootName ?? safeStem(collection.name)
   const originalPaths = exchange?.nodePaths ?? {}
@@ -641,5 +665,13 @@ export function exportPostmanZip(collection) {
 
   writeNode(files, definitionName, originalPaths[collection.id], collection, rootName, 'inherit')
   writeChildren(collection.items, '')
-  return zipSync(Object.fromEntries([...files].map(([path, bytes]) => [childPath(rootName, path), bytes])))
+  const archive = Object.fromEntries([...files].map(([path, bytes]) => [childPath(rootName, path), bytes]))
+  if (environment) {
+    archive[rootName + environmentSuffix] = Buffer.from(JSON.stringify({
+      name: environment.name,
+      values: environment.variables.map(({ key, value, enabled }) => ({ key, value, enabled, type: 'default' })),
+      _postman_variable_scope: 'environment',
+    }, null, 2) + '\n')
+  }
+  return zipSync(archive)
 }

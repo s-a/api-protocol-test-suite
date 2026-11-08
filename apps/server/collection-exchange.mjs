@@ -2,6 +2,7 @@ import { once } from 'node:events'
 import { Worker } from 'node:worker_threads'
 import { importPostmanCollection, importPostmanZip, exportPostmanZip, PostmanExchangeError } from './postman.mjs'
 import { appendImportedCollection, publicWorkspace, readWorkspace, WorkspaceError } from './workspace.mjs'
+import { workspaceSections } from './workspace-storage.mjs'
 import { checkTarget, TargetPolicyError } from './targets.mjs'
 
 const importLimit = 24 * 1024 * 1024
@@ -141,7 +142,9 @@ export async function handleCollectionExchange(request, response, path, accountI
         sendJson(response, 404, { error: 'Collection not found.' })
         return true
       }
-      const zip = await exportPostmanZip(collection)
+      const section = workspaceSections(workspace).find(({ collectionIds }) => collectionIds.includes(id))
+      const environment = workspace.environments.find(({ id }) => id === section?.environmentId)
+      const zip = await exportPostmanZip(collection, environment)
       const filename = collection.name.replace(/[^a-z0-9_-]+/gi, '-').slice(0, 80) || 'collection'
       response.writeHead(200, {
         'Cache-Control': 'no-store',

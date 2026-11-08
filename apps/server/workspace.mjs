@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { isDeepStrictEqual } from 'node:util'
 import { isBodyFormat } from './body-format.ts'
 import { jwtSettings } from './jwt-settings.ts'
 import { readPostmanCollectionVariables } from './postman.mjs'
@@ -210,16 +211,43 @@ export function appendImportedCollection(accountId, collection, sectionId) {
     if (current.collections.some(({ id }) => id === entry.id)) {
       throw new WorkspaceError(409, 'This collection ID already exists in the workspace.')
     }
+    const collections = [...current.collections, { ...entry, exchange: collection.exchange }]
     const { sections, environments } = sectionedWorkspace(current)
     const section = sectionId === undefined ? sections[0] : sections.find(({ id }) => id === sectionId)
-    if (!section) throw new WorkspaceError(404, 'Workspace section not found.')
+    if (!section && (sectionId !== undefined || !collection.environment)) {
+      throw new WorkspaceError(404, 'Workspace section not found.')
+    }
+    if (collection.environment) {
+      const [environment] = entries([collection.environment], 'environments', readEnvironment)
+      const settings = ({ name, variables }) => ({
+        name,
+        variables: variables.map(({ key, value, enabled }) => ({ key, value, enabled })),
+      })
+      const importedSettings = settings(environment)
+      const matches = candidate => {
+        const saved = environments.find(({ id }) => id === candidate?.environmentId)
+        return saved && isDeepStrictEqual(settings(saved), importedSettings)
+      }
+      const destination = matches(section) ? section : sections.find(matches)
+      if (destination) {
+        return { ...current, collections, environments, sections: sections.map(candidate => candidate === destination
+          ? { ...candidate, collectionIds: [...candidate.collectionIds, entry.id] } : candidate) }
+      }
+      const empty = !current.sections && !current.collections.length && !current.environments.length
+      const added = { id: empty ? 'root' : randomUUID(), name: environment.name, environmentId: environment.id, collectionIds: [entry.id] }
+      return {
+        ...current, collections,
+        sections: empty ? [added] : [...sections, added],
+        environments: empty ? [environment] : [...environments, environment],
+      }
+    }
     const updatedSections = sections.map(candidate => ({
       ...candidate,
       collectionIds: candidate === section ? [...candidate.collectionIds, entry.id] : candidate.collectionIds,
     }))
     return {
       ...current,
-      collections: [...current.collections, { ...entry, exchange: collection.exchange }],
+      collections,
       environments: sectionId === undefined ? current.environments : environments,
       ...((current.sections || sectionId !== undefined) && { sections: updatedSections }),
     }
