@@ -21,10 +21,13 @@
     "@vscode-elements/react-elements": "2.4.0",
     "@xmldom/xmldom": "0.9.12",
     "fflate": "0.8.3",
+    "i18next": "^27.0.1",
     "postman-collection": "5.3.1",
     "postman-sandbox": "6.9.0",
+    "qrcode": "1.5.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "react-i18next": "^18.0.0",
     "uuid": "11.1.1",
     "yaml": "2.9.1"
   },
@@ -36,7 +39,9 @@
     "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.14.0",
+    "jsqr": "1.4.0",
     "monaco-editor": "0.55.1",
+    "pngjs": "5.0.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vite": "8.3.6"

@@ -3,7 +3,7 @@ import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
 import { handleAppTab, ownsAppTab } from './app-tab.mjs'
 import { handleCollectionExchange } from './collection-exchange.mjs'
-import { authorizeRequest } from './login.mjs'
+import { authorizeRequest, totpEnabled } from './login.mjs'
 import { handleProfiles } from './profiles.mjs'
 import { handleJwtKeys, handleSendRequest } from './send-request.mjs'
 import { handleWorkspace } from './workspace.mjs'
@@ -117,12 +117,13 @@ async function handleRequest(request, response) {
 }
 
 let server
-if (workspaceEncryptionEnabled()) {
+const encryptWorkspace = workspaceEncryptionEnabled()
+if (encryptWorkspace || totpEnabled) {
   const keys = await keyDirectory(userDataRoot())
   const id = await activeKeyId(keys)
   await Promise.all([loadKey(keys, id, 'public'), loadKey(keys, id, 'private')])
-  await migratePlaintextStorage()
 }
+if (encryptWorkspace) await migratePlaintextStorage()
 if (httpsEnabled) {
   const [cert, key] = await Promise.all([readFile(certFile), readFile(keyFile)])
   server = createHttpsServer({ cert, key }, handleRequest)

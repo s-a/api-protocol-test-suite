@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto'
 import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { setTimeout } from 'node:timers/promises'
 import { promisify } from 'node:util'
 import { dataDirectory } from './data-directory.mjs'
 
@@ -15,6 +16,12 @@ export function accountsFile() {
 
 export function accountId(account) {
   return account.id ?? account.salt
+}
+
+function validTotp(factor) {
+  return factor?.version === 1 && Number.isSafeInteger(factor.lastStep) && factor.lastStep >= 0 &&
+    typeof factor.keyId === 'string' && /^[a-f0-9]{64}$/.test(factor.keyId) &&
+    ['wrappedKey', 'nonce', 'tag', 'ciphertext'].every(field => typeof factor[field] === 'string')
 }
 
 export async function readAccounts(file = accountsFile()) {
@@ -34,6 +41,9 @@ export async function readAccounts(file = accountsFile()) {
       typeof account.salt !== 'string' || !/^[0-9a-f]{32}$/.test(account.salt) ||
       typeof account.hash !== 'string' || !/^[0-9a-f]{64}$/.test(account.hash) ||
       (account.id !== undefined && (typeof account.id !== 'string' || !/^[0-9a-f]{32}$/.test(account.id))) ||
+      (account.sessionRevision !== undefined &&
+        (typeof account.sessionRevision !== 'string' || !/^[0-9a-f]{32}$/.test(account.sessionRevision))) ||
+      (account.totp !== undefined && !validTotp(account.totp)) ||
       names.has(account.username) || ids.has(accountId(account))) throw new Error('Invalid accounts file.')
     names.add(account.username)
     ids.add(accountId(account))
@@ -56,16 +66,26 @@ export async function verifyPassword(account, password) {
   return Boolean(account && timingSafeEqual(hash, Buffer.from(account.hash, 'hex')))
 }
 
+async function lockAccounts(lockPath) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await open(lockPath, 'wx', 0o600)
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error
+      if (attempt === 40) throw new Error(`Accounts file is locked: ${lockPath}`, { cause: error })
+      await setTimeout(25)
+    }
+  }
+}
+
 export async function updateAccounts(update, file = accountsFile()) {
   await mkdir(dirname(file), { recursive: true })
   const lockPath = `${file}.lock`
-  const lock = await open(lockPath, 'wx', 0o600).catch(error => {
-    if (error.code === 'EEXIST') throw new Error(`Accounts file is locked: ${lockPath}`)
-    throw error
-  })
+  const lock = await lockAccounts(lockPath)
   const temporary = `${file}.${randomUUID()}.tmp`
   try {
-    const accounts = update(await readAccounts(file))
+    const accounts = await update(await readAccounts(file))
+    if (accounts === undefined) return
     await writeFile(temporary, JSON.stringify({ version: 1, accounts }, null, 2) + '\n', { flag: 'wx', mode: 0o600 })
     await rename(temporary, file)
   } finally {

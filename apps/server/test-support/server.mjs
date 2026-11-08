@@ -20,7 +20,7 @@ export function login(address, credentials = { username, password }, path = '/lo
   })
 }
 
-export async function startServer(t, env = {}, authenticate = true) {
+export async function startServer(t, env = {}, authenticate = true, nodeArgs = []) {
   const directory = await mkdtemp(join(tmpdir(), 'api-server-test-'))
   const accountsFile = env.ACCOUNTS_FILE ?? join(directory, 'accounts.json')
   const targetsFile = join(directory, 'targets.json')
@@ -36,18 +36,21 @@ export async function startServer(t, env = {}, authenticate = true) {
     const account = await hashPassword(username, password)
     await updateAccounts(accounts => [...accounts, account], accountsFile)
   }
-  if (env.WORKSPACE_ENCRYPTION_ENABLED !== 'false' && !await readOptional(join(keys, 'active'))) {
+  if ((env.WORKSPACE_ENCRYPTION_ENABLED !== 'false' || env.TOTP_ENABLED === 'true') &&
+      !await readOptional(join(keys, 'active'))) {
     await generateStorageKey(keys)
   }
-  const server = spawn(process.execPath, [entrypoint], {
+  const server = spawn(process.execPath, [...nodeArgs, entrypoint], {
     env: {
       ...process.env, HOST: '127.0.0.1', PORT: '0', HTTPS_ENABLED: undefined, TLS_CERT_FILE: '', TLS_KEY_FILE: '',
-      WORKSPACE_ENCRYPTION_ENABLED: undefined, ...env, ACCOUNTS_FILE: accountsFile, ENCRYPTION_KEYS_DIR: keys,
+      WORKSPACE_ENCRYPTION_ENABLED: undefined, TOTP_ENABLED: undefined, ...env, ACCOUNTS_FILE: accountsFile, ENCRYPTION_KEYS_DIR: keys,
       TARGETS_FILE: targetsFile,
       USER_DATA_DIR: env.USER_DATA_DIR ?? join(directory, 'users'),
     },
-    stdio: ['ignore', 'pipe', 'inherit'],
+    stdio: ['ignore', 'pipe', 'pipe'],
   })
+  let errors = ''
+  server.stderr.setEncoding('utf8').on('data', chunk => { errors += chunk })
   const exited = once(server, 'exit')
   stop = async () => {
     server.kill()
@@ -56,8 +59,11 @@ export async function startServer(t, env = {}, authenticate = true) {
 
   const output = createInterface({ input: server.stdout })
   const { value: startupLine } = await output[Symbol.asyncIterator]().next()
-  const address = startupLine?.match(/https?:\/\/127\.0\.0\.1:\d+$/)?.[0]
-  assert.ok(address, 'Expected the server to report its listen address')
+  const boundAddress = startupLine?.match(/https?:\/\/(?:127\.0\.0\.1|0\.0\.0\.0):\d+$/)?.[0]
+  assert.ok(boundAddress, 'Expected the server to report its listen address. ' + errors)
+  const address = boundAddress.replace('://0.0.0.0:', '://127.0.0.1:')
+  let outputText = startupLine + '\n'
+  output.on('line', line => { outputText += line + '\n' })
   let cookie
   if (authenticate) {
     const response = await login(address)
@@ -74,5 +80,5 @@ export async function startServer(t, env = {}, authenticate = true) {
       env: { ...process.env, TARGETS_FILE: targetsFile },
     })
   }
-  return { address, stop, request, accountsFile, targetsFile, targets }
+  return { address, boundAddress, stop, request, accountsFile, targetsFile, targets, serverOutput: () => outputText + errors }
 }

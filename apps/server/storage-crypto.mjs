@@ -10,6 +10,7 @@ const generatePair = promisify(generateKeyPair)
 const keyIdPattern = /^[a-f0-9]{64}$/
 const passwordLabel = 'account-password-v1'
 const storageLabel = 'account-storage-v1'
+const totpLabel = 'account-totp-v1'
 
 export async function atomicWrite(file, contents, exclusive = false) {
   await mkdir(dirname(file), { recursive: true, mode: 0o700 })
@@ -145,6 +146,38 @@ export async function unwrapAccountKey(directory, account, envelope) {
   if (envelope?.version !== 1) throw new Error('Invalid account key version.')
   const privateKey = await loadKey(directory, envelope.keyId, 'private')
   return unwrapKey(privateKey, storageLabel, [account, envelope.keyId], envelope.wrappedKey)
+}
+
+export async function sealTotpSecret(directory, accountId, secret) {
+  const keyId = await activeKeyId(directory)
+  const publicKey = await loadKey(directory, keyId, 'public')
+  const key = randomBytes(32)
+  return {
+    ...sealData(key, [totpLabel, accountId], secret),
+    keyId,
+    wrappedKey: wrapKey(publicKey, totpLabel, [accountId, keyId], key),
+  }
+}
+
+async function unwrapTotpKey(directory, accountId, envelope) {
+  const privateKey = await loadKey(directory, envelope.keyId, 'private')
+  return unwrapKey(privateKey, totpLabel, [accountId, envelope.keyId], envelope.wrappedKey)
+}
+
+export async function openTotpSecret(directory, accountId, envelope) {
+  const key = await unwrapTotpKey(directory, accountId, envelope)
+  const secret = openData(key, [totpLabel, accountId], envelope)
+  if (secret.length !== 20) throw new Error('Invalid TOTP secret.')
+  return secret
+}
+
+export async function rewrapTotpSecret(directory, accountId, envelope, keyId) {
+  const key = await unwrapTotpKey(directory, accountId, envelope)
+  const publicKey = await loadKey(directory, keyId, 'public')
+  const replacement = { ...envelope, keyId, wrappedKey: wrapKey(publicKey, totpLabel, [accountId, keyId], key) }
+  const verified = await unwrapTotpKey(directory, accountId, replacement)
+  if (!verified.equals(key)) throw new Error('Rewrapped TOTP key failed verification.')
+  return replacement
 }
 
 export async function sealPassword(file, command, username, password) {

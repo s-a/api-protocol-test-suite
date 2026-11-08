@@ -1,13 +1,13 @@
 import { lstat, mkdir, readdir, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
-import { accountId, readAccounts, usernamePattern } from './accounts.mjs'
+import { accountId, readAccounts, updateAccounts, usernamePattern } from './accounts.mjs'
 import {
   accountDataKey, accountFiles, dataKeyFile, encryptionRecoverySuffix, exists,
   readEncryptedData, storedAccountKey, workspaceFile, writeEncryptedData,
 } from './encrypted-storage.mjs'
 import {
-  atomicWrite, generateStorageKey, keyDirectory, loadKey, unwrapAccountKey, wrapAccountKey,
+  atomicWrite, generateStorageKey, keyDirectory, loadKey, rewrapTotpSecret, unwrapAccountKey, wrapAccountKey,
 } from './storage-crypto.mjs'
 import { accountDirectoryName, readJsonFile, userDataRoot, userDirectory } from './user-data.mjs'
 import { readLegacyWorkspace } from './workspace-storage.mjs'
@@ -123,6 +123,16 @@ async function rotate(root, keys, id) {
     const verified = await unwrapAccountKey(keys, entry.name, replacement)
     if (!verified.equals(key)) throw new Error('Rewrapped AES key failed verification.')
     await atomicWrite(join(directory, dataKeyFile), JSON.stringify(replacement))
+  }
+  if ((await readAccounts()).some(account => account.totp && account.totp.keyId !== id)) {
+    await updateAccounts(async accounts => {
+      for (const account of accounts) {
+        if (account.totp && account.totp.keyId !== id) {
+          account.totp = await rewrapTotpSecret(keys, accountId(account), account.totp, id)
+        }
+      }
+      return accounts
+    })
   }
   await atomicWrite(join(keys, 'active'), id + '\n')
 }

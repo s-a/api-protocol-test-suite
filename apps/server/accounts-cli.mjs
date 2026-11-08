@@ -1,10 +1,11 @@
+import { randomBytes } from 'node:crypto'
 import { emitKeypressEvents } from 'node:readline'
 import { stdin, stderr } from 'node:process'
 import { accountId, hashPassword, maxPasswordLength, readAccounts, updateAccounts, usernamePattern } from './accounts.mjs'
 import { keyDirectory, openPassword, sealPassword } from './storage-crypto.mjs'
 import { userDataRoot } from './user-data.mjs'
 
-const usage = 'Usage: server.mjs accounts list | add <username> [--sealed] | set-password <username> [--sealed] | remove <username> | seal-password <add|set-password> <username> [--stdin]'
+const usage = 'Usage: server.mjs accounts list | add <username> [--sealed] | set-password <username> [--sealed] | remove <username> | reset-2fa <username> | seal-password <add|set-password> <username> [--stdin]'
 
 async function readInput(limit) {
   const chunks = []
@@ -78,8 +79,9 @@ export async function runAccountsCommand(args) {
     for (const account of await readAccounts()) console.log(account.username)
     return
   }
-  const sealed = args.length === 3 && option === '--sealed' && command !== 'remove'
-  if (!['add', 'set-password', 'remove'].includes(command) || !username ||
+  const passwordCommand = command === 'add' || command === 'set-password'
+  const sealed = args.length === 3 && option === '--sealed' && passwordCommand
+  if (!['add', 'set-password', 'remove', 'reset-2fa'].includes(command) || !username ||
     (args.length !== 2 && !sealed) || !usernamePattern.test(username)) {
     throw new Error(usage)
   }
@@ -93,7 +95,7 @@ export async function runAccountsCommand(args) {
 
   findAccount(await readAccounts())
   let replacement
-  if (command !== 'remove') {
+  if (passwordCommand) {
     let password
     if (sealed) {
       try {
@@ -109,9 +111,13 @@ export async function runAccountsCommand(args) {
   await updateAccounts(accounts => {
     const index = findAccount(accounts)
     if (command === 'add') accounts.push(replacement)
-    else if (replacement) accounts[index] = { ...replacement, id: accountId(accounts[index]) }
+    else if (replacement) accounts[index] = { ...accounts[index], ...replacement, id: accountId(accounts[index]) }
+    else if (command === 'reset-2fa') {
+      delete accounts[index].totp
+      accounts[index].sessionRevision = randomBytes(16).toString('hex')
+    }
     else accounts.splice(index, 1)
     return accounts
   })
-  console.log(`Account ${{ add: 'added', 'set-password': 'updated', remove: 'removed' }[command]}: ${username}`)
+  console.log(`Account ${{ add: 'added', 'set-password': 'updated', remove: 'removed', 'reset-2fa': '2FA reset' }[command]}: ${username}`)
 }
