@@ -5,10 +5,6 @@ Da werden auch noch unterschiedliche Revisionen abgelegt, das wusste ich gar nic
 
 [Watch the full walkthrough with two-factor sign-in, PayPal Checkout, and App Store Server API (MP4)](docs/api-protocol-test-suite-showcase.mp4)
 
-- [PayPal Checkout showcase with two-factor sign-in, order lookup, and captured payment details (MP4)](docs/paypal-checkout-showcase.mp4)
-- [App Store Server API showcase with ES256 authorization, transaction details, and purchase history (MP4)](docs/app-store-server-showcase.mp4)
-- [First sign-in with two-factor authentication (MP4)](docs/first-sign-in-2fa.mp4)
-
 A self-hosted workspace for preparing HTTP API tests. The English-language interface manages collections, folders, requests, and environments. With a valid session, `GET /api/health` returns HTTP 200 and `{"status":"ok"}`.
 
 ## Local setup
