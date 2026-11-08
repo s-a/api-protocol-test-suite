@@ -45,6 +45,9 @@ exports/
 
 *.log
 
+# Local showcase tools and demo data
+/docs/tools/
+
 .DS_Store
 Thumbs.db
 .idea/

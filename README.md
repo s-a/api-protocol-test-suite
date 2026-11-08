@@ -1,7 +1,13 @@
 Da werden auch noch unterschiedliche Revisionen abgelegt, das wusste ich gar nicht.
 # API Protocol Test Suite
 
-![Hello World demo showing sign-in, the demo environment, JWT authorization, request options, and a 200 OK response](docs/hello-world-showcase.gif)
+[![Watch the API Protocol Test Suite walkthrough](docs/showcase-preview.jpg)](docs/api-protocol-test-suite-showcase.mp4)
+
+[Watch the full walkthrough with two-factor sign-in, PayPal Checkout, and App Store Server API (MP4)](docs/api-protocol-test-suite-showcase.mp4)
+
+- [PayPal Checkout showcase with two-factor sign-in, order lookup, and captured payment details (MP4)](docs/paypal-checkout-showcase.mp4)
+- [App Store Server API showcase with ES256 authorization, transaction details, and purchase history (MP4)](docs/app-store-server-showcase.mp4)
+- [First sign-in with two-factor authentication (MP4)](docs/first-sign-in-2fa.mp4)
 
 A self-hosted workspace for preparing HTTP API tests. The English-language interface manages collections, folders, requests, and environments. With a valid session, `GET /api/health` returns HTTP 200 and `{"status":"ok"}`.
 
@@ -63,11 +69,27 @@ node --env-file-if-exists=.env apps/server/server.mjs accounts list
 
 `add` and `set-password` prompt for the password and its confirmation in an interactive terminal without echoing either input. Passwords must be 15 to 1024 characters long. Usernames are case-sensitive, start with an ASCII letter or digit, and contain up to 64 ASCII letters, digits, periods, hyphens, or underscores. `add` requires an unused username. `set-password` and `remove` require an existing account.
 
-The first successful `add` creates `data/accounts.json`. `ACCOUNTS_FILE` sets a different path outside the directories served as web content. Relative paths are resolved against the working directory. The JSON file stores a unique salt and a scrypt hash for each account. The server needs read access to the file. The account commands need write access to its directory. A forced termination can leave a `.lock` file behind. It can be removed once all account commands have stopped.
+The first successful `add` creates `data/accounts.json`. `ACCOUNTS_FILE` sets a different path outside the directories served as web content. Relative paths are resolved against the working directory. The JSON file stores a unique salt and a scrypt hash for each account. The server needs read access to the file. The account commands need write access to its directory, as does the server when TOTP is enabled. A forced termination can leave a `.lock` file behind. Remove it only after the server and all account commands have stopped.
 
 The server protects the interface and all API routes, including `/api/health`. Without a valid session, browser requests are redirected to the sign-in page and API requests receive HTTP 401. Each account has its own workspace and can use the interface in one browser tab at a time, across browsers. Additional tabs can wait for access or select **Open anyway** to take over. The previous tab loses access for that account. Sessions end at sign-out, after eight hours, or when the server restarts. Changing an account's password or deleting the account invalidates its sessions on their next use. A password change preserves the workspace. Creating an account with a previously used username gives it a new workspace.
 
-API clients sign in with `POST /login`. The request sends `username` and `password` as `application/x-www-form-urlencoded` data. On success, the server returns HTTP 303 and a session cookie. Include the cookie in API requests and in `POST /logout`.
+API clients sign in with `POST /login`. The request sends `username` and `password` as `application/x-www-form-urlencoded` data. With TOTP disabled, a successful request returns HTTP 303 and a session cookie. Include the session cookie in API requests and in `POST /logout`.
+
+### Two-factor authentication
+
+`TOTP_ENABLED` accepts `true` or `false` and defaults to `false`. Restart the server to apply a change. A restart ends all sessions. When enabled, TOTP applies to every account. At the next sign-in, accounts without a registered factor scan a QR code with a compatible authenticator app. The first valid six-digit code registers the factor and completes sign-in. Later sign-ins require a code after password verification. Disabling TOTP preserves registered factors for use when it is enabled again.
+
+QR code generation and code verification run locally without internet access. Keep the server and authenticator clocks accurate. TOTP works over both HTTP and HTTPS. HTTP transmits the password, setup secret, one-time code, and cookies without encryption.
+
+With TOTP enabled, a successful `POST /login` returns HTTP 303 to `/login/totp` and sets a temporary cookie valid for five minutes. Use that cookie for `GET /login/totp` to obtain the form and, during setup, the QR code. Submit the current six-digit code as `code` in an `application/x-www-form-urlencoded` request to `POST /login/totp`. A successful response returns HTTP 303 with the session cookie and clears the temporary cookie. The temporary cookie grants no API access. Invalid, expired, or already used codes return HTTP 401. After five failed code attempts within five minutes for the same account, subsequent attempts return HTTP 429 with `Retry-After`. An expired or superseded sign-in redirects to `/login`.
+
+TOTP requires a valid active RSA key pair in `ENCRYPTION_KEYS_DIR` even when workspace encryption is disabled. The server stores TOTP secrets encrypted in the accounts file. See [Account data encryption](#account-data-encryption) for key generation and rotation.
+
+```powershell
+node --env-file-if-exists=.env apps/server/server.mjs accounts reset-2fa anna
+```
+
+The reset command removes the factor and invalidates the account's sessions and pending sign-ins on their next request. It works with TOTP enabled or disabled. The next sign-in with TOTP enabled requires setup again. Changing a password preserves the registered factor.
 
 ### Allowed request targets
 
@@ -182,7 +204,7 @@ To migrate a single account manually, stop the server and run the following comm
 node --env-file-if-exists=.env apps/server/server.mjs storage migrate anna
 ```
 
-For rotation, stop the server, generate a new pair, then run `storage rotate <new-key-id>` through the same entrypoint. Rotation rewraps the stored AES keys and activates the new pair after the last successful update. Repeat the command with the same ID after an interruption. Keep retired private keys for as long as backups that depend on them remain restorable.
+For rotation, stop the server, generate a new pair, then run `storage rotate <new-key-id>` through the same entrypoint. Rotation rewraps the stored AES keys for workspace data and registered TOTP factors, including when TOTP is disabled. It activates the new pair after the last successful update. Repeat the command with the same ID after an interruption. Keep retired private keys for as long as backups that depend on them remain restorable.
 
 ### Sealed account passwords
 
